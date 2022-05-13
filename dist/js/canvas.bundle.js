@@ -99,6 +99,32 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./src/img/enemy-walk-left.png":
+/*!*************************************!*\
+  !*** ./src/img/enemy-walk-left.png ***!
+  \*************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = (__webpack_require__.p + "d1812733d3020e4211c1e4ea65318f92.png");
+
+/***/ }),
+
+/***/ "./src/img/enemy-walk-right.png":
+/*!**************************************!*\
+  !*** ./src/img/enemy-walk-right.png ***!
+  \**************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = (__webpack_require__.p + "a8796790d2df226580811501a613a755.png");
+
+/***/ }),
+
 /***/ "./src/img/hills.png":
 /*!***************************!*\
   !*** ./src/img/hills.png ***!
@@ -207,11 +233,15 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _img_spriteStandLeft_png__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../img/spriteStandLeft.png */ "./src/img/spriteStandLeft.png");
 /* harmony import */ var _img_spriteRunRight_png__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../img/spriteRunRight.png */ "./src/img/spriteRunRight.png");
 /* harmony import */ var _img_spriteRunLeft_png__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../img/spriteRunLeft.png */ "./src/img/spriteRunLeft.png");
+/* harmony import */ var _img_enemy_walk_right_png__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../img/enemy-walk-right.png */ "./src/img/enemy-walk-right.png");
+/* harmony import */ var _img_enemy_walk_left_png__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../img/enemy-walk-left.png */ "./src/img/enemy-walk-left.png");
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
+
+
 
 
 
@@ -302,6 +332,59 @@ var Player = /*#__PURE__*/function () {
   return Player;
 }();
 
+var Enemy = /*#__PURE__*/function () {
+  function Enemy(x, y, width, height, color, range) {
+    _classCallCheck(this, Enemy);
+
+    this.speed = 10;
+    this.position = {
+      x: x,
+      y: y
+    };
+    this.velocity = {
+      x: 5,
+      y: 0
+    };
+    this.sprites = {
+      walk: {
+        left: createImage(_img_enemy_walk_left_png__WEBPACK_IMPORTED_MODULE_9__["default"]),
+        right: createImage(_img_enemy_walk_right_png__WEBPACK_IMPORTED_MODULE_8__["default"]),
+        cropWidth: 27
+      }
+    };
+    this.initialPosition = x;
+    this.width = width;
+    this.height = height;
+    this.color = color;
+    this.range = range;
+    this.frame = 0;
+    this.currentDirection = 'right';
+    this.currentSprite = this.sprites.walk.right;
+    this.currentCropWidth = this.sprites.walk.cropWidth;
+    this.currentWidth = this.width;
+  }
+
+  _createClass(Enemy, [{
+    key: "draw",
+    value: function draw() {
+      c.drawImage(this.currentSprite, this.frame * this.currentCropWidth, 0, this.currentCropWidth, 24, this.position.x, this.position.y, this.width, this.height);
+    }
+  }, {
+    key: "update",
+    value: function update() {
+      this.draw();
+      this.position.x += this.velocity.x;
+      this.frame = this.frame < 3 ? this.frame + 1 : 0;
+
+      if (this.position.y + this.height + this.velocity.y + gravity <= canvas.height) {
+        this.velocity.y += gravity;
+      }
+    }
+  }]);
+
+  return Enemy;
+}();
+
 var Platform = /*#__PURE__*/function () {
   function Platform(_ref) {
     var x = _ref.x,
@@ -358,13 +441,15 @@ var platformImage = createImage(_img_platform_png__WEBPACK_IMPORTED_MODULE_2__["
 var platformSmallTallImage = createImage(_img_platformSmallTall_png__WEBPACK_IMPORTED_MODULE_3__["default"]);
 var floorPlatformYPos = canvas.height - platformImage.height;
 var player;
+var enemies;
 var platforms;
 var genericImages;
 var winLocation;
 
 var init = function init() {
-  player = new Player(100, 100, 76, 90, 'red');
   winLocation = platformImage.width * 4 + 500;
+  player = new Player(100, 100, 76, 90, 'red');
+  enemies = [new Enemy(200, floorPlatformYPos - 44.4, 50, 44.4, 'red', 900), new Enemy(1300, floorPlatformYPos - 61.6, 70, 61.6, 'blue', 600), new Enemy(winLocation, floorPlatformYPos - 61.6, 70, 61.6, '#bada55', 500)];
   platformsOffset = 0;
   platforms = [new Platform({
     x: -1,
@@ -414,6 +499,9 @@ var animate = function animate() {
     platform.draw();
   });
   player.update();
+  enemies.forEach(function (enemy) {
+    return enemy.update();
+  });
 
   if (keys.right.pressed && player.position.x < 400) {
     player.velocity.x = player.speed;
@@ -430,6 +518,9 @@ var animate = function animate() {
       genericImages.forEach(function (genericImage) {
         genericImage.position.x -= player.speed * 0.66;
       });
+      enemies.forEach(function (enemy) {
+        return enemy.position.x -= player.speed;
+      });
     }
 
     if (keys.left.pressed && platformsOffset > 0) {
@@ -440,9 +531,31 @@ var animate = function animate() {
       genericImages.forEach(function (genericImage) {
         genericImage.position.x += player.speed * 0.66;
       });
+      enemies.forEach(function (enemy) {
+        return enemy.position.x += player.speed;
+      });
     }
-  } // platform collision detection
+  } // enemy movement
 
+
+  enemies.forEach(function (enemy) {
+    if (enemy.currentDirection === 'right' && enemy.position.x + platformsOffset > enemy.initialPosition + enemy.range) {
+      enemy.currentDirection = 'left';
+      enemy.currentSprite = enemy.sprites.walk.left;
+      enemy.velocity.x = -5;
+    } else if (enemy.currentDirection === 'left' && enemy.position.x + platformsOffset < enemy.initialPosition) {
+      enemy.currentDirection = 'right';
+      enemy.currentSprite = enemy.sprites.walk.right;
+      enemy.velocity.x = 5;
+    }
+  }); // enemy collision detection
+  // clean up the enemy position logic + detect when player landed on enemy and kill the enemy!
+
+  enemies.forEach(function (enemy) {
+    if (player.position.x + player.width > enemy.position.x && player.position.x < enemy.position.x + enemy.width && player.position.y + player.height > enemy.position.y) {
+      init();
+    }
+  }); // platform collision detection
 
   platforms.forEach(function (platform) {
     var playerIsAboveOrExactlyOnPlatform = player.position.y + player.height <= platform.position.y;

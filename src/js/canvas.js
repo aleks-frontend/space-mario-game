@@ -6,6 +6,8 @@ import spriteStandRight from '../img/spriteStandRight.png';
 import spriteStandLeft from '../img/spriteStandLeft.png';
 import spriteRunRight from '../img/spriteRunRight.png';
 import spriteRunLeft from '../img/spriteRunLeft.png';
+import spriteEnemyWalkRight from '../img/enemy-walk-right.png';
+import spriteEnemyWalkLeft from '../img/enemy-walk-left.png';
 
 const canvas = document.querySelector('canvas');
 const c = canvas.getContext('2d');
@@ -90,6 +92,59 @@ class Player {
     }
 }
 
+class Enemy {
+  constructor(x, y, width, height, color, range) {
+      this.speed = 10
+      this.position = { x, y }
+      this.velocity = {
+          x: 5,
+          y: 0
+      }
+      this.sprites = {
+        walk: {
+          left: createImage(spriteEnemyWalkLeft),
+          right: createImage(spriteEnemyWalkRight),
+          cropWidth: 27,
+        }
+      }
+      this.initialPosition = x
+      this.width = width
+      this.height = height
+      this.color = color
+      this.range = range
+      this.frame = 0
+      this.currentDirection = 'right'
+      this.currentSprite = this.sprites.walk.right
+      this.currentCropWidth = this.sprites.walk.cropWidth
+      this.currentWidth = this.width
+  }    
+
+  draw() {
+      c.drawImage(
+        this.currentSprite,
+        this.frame * this.currentCropWidth,
+        0,
+        this.currentCropWidth,
+        24,
+        this.position.x,
+        this.position.y,
+        this.width,
+        this.height
+      )
+  }
+
+  update() {
+      this.draw();
+      this.position.x += this.velocity.x
+
+      this.frame = this.frame < 3 ? (this.frame + 1) : 0;
+
+      if ((this.position.y + this.height + this.velocity.y + gravity) <= canvas.height) {
+          this.velocity.y += gravity;
+      }
+  }
+}
+
 class Platform {
     constructor({x, y, image}) {
         this.position = {
@@ -129,13 +184,19 @@ const platformSmallTallImage = createImage(platformSmallTallBg);
 
 const floorPlatformYPos = canvas.height - platformImage.height;
 let player;
+let enemies;
 let platforms;
 let genericImages;
 let winLocation;
 
 const init = () => {
-  player = new Player(100, 100, 76, 90, 'red');
   winLocation = platformImage.width * 4 + 500;
+  player = new Player(100, 100, 76, 90, 'red');
+  enemies = [
+    new Enemy(200, floorPlatformYPos - 44.4, 50, 44.4, 'red', 900), 
+    new Enemy(1300, floorPlatformYPos - 61.6, 70, 61.6, 'blue', 600),
+    new Enemy(winLocation, floorPlatformYPos - 61.6, 70, 61.6, '#bada55', 500),
+  ];
   platformsOffset = 0;
   platforms = [
     new Platform({x: -1, y: floorPlatformYPos, image: platformImage}), 
@@ -171,6 +232,7 @@ const animate = () => {
       platform.draw();
     })
     player.update();
+    enemies.forEach(enemy => enemy.update());
     
     if (keys.right.pressed && player.position.x < 400) {
         player.velocity.x = player.speed;
@@ -188,6 +250,8 @@ const animate = () => {
             genericImages.forEach(genericImage => {
               genericImage.position.x -= player.speed * 0.66;
             });
+
+            enemies.forEach(enemy => enemy.position.x -= player.speed);
         }
 
         if (keys.left.pressed && platformsOffset > 0) {
@@ -199,8 +263,33 @@ const animate = () => {
             genericImages.forEach(genericImage => {
               genericImage.position.x += player.speed * 0.66;
             });
+
+            enemies.forEach(enemy => enemy.position.x += player.speed);
         }
     }
+    
+    // enemy movement
+    enemies.forEach(enemy => {
+      if (enemy.currentDirection === 'right' && (enemy.position.x + platformsOffset) > (enemy.initialPosition + enemy.range)) {
+        enemy.currentDirection = 'left';
+        enemy.currentSprite = enemy.sprites.walk.left;
+        enemy.velocity.x = -5;
+      } else if (enemy.currentDirection === 'left' && (enemy.position.x + platformsOffset) < enemy.initialPosition) {
+        enemy.currentDirection = 'right';
+        enemy.currentSprite = enemy.sprites.walk.right;
+        enemy.velocity.x = 5;
+      }
+    });
+
+    // enemy collision detection
+    // clean up the enemy position logic + detect when player landed on enemy and kill the enemy!
+    enemies.forEach(enemy => {
+      if (((player.position.x + player.width) > enemy.position.x) &&
+        (player.position.x) < (enemy.position.x + enemy.width) &&
+          (player.position.y + player.height) > enemy.position.y) {
+        init();
+      }
+    })
     
     // platform collision detection
     platforms.forEach(platform => {
