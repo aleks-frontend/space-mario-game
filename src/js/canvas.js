@@ -7,7 +7,11 @@ import spriteStandLeft from '../img/spriteStandLeft.png';
 import spriteRunRight from '../img/spriteRunRight.png';
 import spriteRunLeft from '../img/spriteRunLeft.png';
 import spriteEnemyWalkRight from '../img/enemy-walk-right.png';
+import spriteEnemy2WalkRight from '../img/enemy-2-walk-right.png';
+import spriteEnemy3WalkRight from '../img/enemy-3-walk-right.png';
 import spriteEnemyWalkLeft from '../img/enemy-walk-left.png';
+import spriteEnemy2WalkLeft from '../img/enemy-2-walk-left.png';
+import spriteEnemy3WalkLeft from '../img/enemy-3-walk-left.png';
 
 const canvas = document.querySelector('canvas');
 const c = canvas.getContext('2d');
@@ -108,6 +112,7 @@ class Enemy {
         }
       }
       this.initialPosition = x
+      this.initialVelocity = this.velocity.x
       this.width = width
       this.height = height
       this.color = color
@@ -122,7 +127,7 @@ class Enemy {
   draw() {
       c.drawImage(
         this.currentSprite,
-        this.frame * this.currentCropWidth,
+        Math.floor(this.frame) * this.currentCropWidth,
         0,
         this.currentCropWidth,
         24,
@@ -137,7 +142,115 @@ class Enemy {
       this.draw();
       this.position.x += this.velocity.x
 
-      this.frame = this.frame < 3 ? (this.frame + 1) : 0;
+      this.frame = this.frame < 3 ? (this.frame + 0.25) : 0;
+
+      if ((this.position.y + this.height + this.velocity.y + gravity) <= canvas.height) {
+          this.velocity.y += gravity;
+      }
+  }
+}
+
+class Enemy2 {
+  constructor(x, y, width, height, color, range) {
+      this.speed = 10
+      this.position = { x, y }
+      this.velocity = {
+          x: 5,
+          y: 0
+      }
+      this.sprites = {
+        walk: {
+          left: createImage(spriteEnemy2WalkLeft),
+          right: createImage(spriteEnemy2WalkRight),
+          cropWidth: 24,
+        }
+      }
+      this.initialPosition = x
+      this.initialVelocity = this.velocity.x
+      this.width = width
+      this.height = height
+      this.color = color
+      this.range = range
+      this.frame = 0
+      this.currentDirection = 'right'
+      this.currentSprite = this.sprites.walk.right
+      this.currentCropWidth = this.sprites.walk.cropWidth
+      this.currentWidth = this.width
+  }    
+
+  draw() {
+      c.drawImage(
+        this.currentSprite,
+        Math.floor(this.frame) * this.currentCropWidth,
+        0,
+        this.currentCropWidth,
+        23,
+        this.position.x,
+        this.position.y,
+        this.width,
+        this.height
+      )
+  }
+
+  update() {
+      this.draw();
+      this.position.x += this.velocity.x
+
+      this.frame = this.frame < 3 ? (this.frame + 0.25) : 0;
+
+      if ((this.position.y + this.height + this.velocity.y + gravity) <= canvas.height) {
+          this.velocity.y += gravity;
+      }
+  }
+}
+
+class Enemy3 {
+  constructor(x, y, width, height, color, range) {
+      this.speed = 10
+      this.position = { x, y }
+      this.velocity = {
+          x: 3,
+          y: 0
+      }
+      this.sprites = {
+        walk: {
+          left: createImage(spriteEnemy3WalkLeft),
+          right: createImage(spriteEnemy3WalkRight),
+          cropWidth: 48,
+        }
+      }
+      this.initialPosition = x
+      this.initialVelocity = this.velocity.x
+      this.width = width
+      this.height = height
+      this.color = color
+      this.range = range
+      this.frame = 0
+      this.currentDirection = 'right'
+      this.currentSprite = this.sprites.walk.right
+      this.currentCropWidth = this.sprites.walk.cropWidth
+      this.currentWidth = this.width
+  }    
+
+  draw() {
+      c.drawImage(
+        this.currentSprite,
+        Math.floor(this.frame) * this.currentCropWidth,
+        0,
+        this.currentCropWidth,
+        48,
+        this.position.x,
+        this.position.y,
+        this.width,
+        this.height
+      )
+  }
+
+  update() {
+      this.draw();
+      this.position.x += this.velocity.x
+
+      this.frame = this.frame < 5 ? (this.frame + 0.1) : 0;
 
       if ((this.position.y + this.height + this.velocity.y + gravity) <= canvas.height) {
           this.velocity.y += gravity;
@@ -193,8 +306,8 @@ const init = () => {
   winLocation = platformImage.width * 4 + 500;
   player = new Player(100, 100, 76, 90, 'red');
   enemies = [
-    new Enemy(200, floorPlatformYPos - 44.4, 50, 44.4, 'red', 900), 
-    new Enemy(1300, floorPlatformYPos - 61.6, 70, 61.6, 'blue', 600),
+    new Enemy3(550, floorPlatformYPos - 70, 70, 70, 'red', 300), 
+    new Enemy2(1300, floorPlatformYPos - 50, 50, 50, 'blue', 600),
     new Enemy(winLocation, floorPlatformYPos - 61.6, 70, 61.6, '#bada55', 500),
   ];
   platformsOffset = 0;
@@ -207,11 +320,11 @@ const init = () => {
     new Platform({x: winLocation, y: floorPlatformYPos, image: platformImage}),
   ];
   genericImages = [
-    new GenericImage({
-      x: -1,
-      y: -1,
-      image: createImage(bodyBg)
-    }),
+    // new GenericImage({
+    //   x: -1,
+    //   y: -1,
+    //   image: createImage(bodyBg)
+    // }),
     new GenericImage({
       x: -1,
       y: -1,
@@ -273,11 +386,11 @@ const animate = () => {
       if (enemy.currentDirection === 'right' && (enemy.position.x + platformsOffset) > (enemy.initialPosition + enemy.range)) {
         enemy.currentDirection = 'left';
         enemy.currentSprite = enemy.sprites.walk.left;
-        enemy.velocity.x = -5;
+        enemy.velocity.x = -enemy.initialVelocity;
       } else if (enemy.currentDirection === 'left' && (enemy.position.x + platformsOffset) < enemy.initialPosition) {
         enemy.currentDirection = 'right';
         enemy.currentSprite = enemy.sprites.walk.right;
-        enemy.velocity.x = 5;
+        enemy.velocity.x = enemy.initialVelocity;
       }
     });
 
